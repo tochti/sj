@@ -3,6 +3,7 @@ package sj
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
@@ -40,6 +41,17 @@ func EqualEpisodeResource(r1, r2 EpisodeResource) error {
 		r1.Name != r2.Name ||
 		r1.URL != r2.URL {
 		m := fmt.Sprintf("Expect %v was %v", r1, r2)
+		return errors.New(m)
+	}
+
+	return nil
+}
+
+func EqualUser(u1, u2 User) error {
+	if u1.ID != u2.ID ||
+		u1.Name != u2.Name ||
+		u1.Password != u2.Password {
+		m := fmt.Sprintf("Expect %v was %v", u1, u2)
 		return errors.New(m)
 	}
 
@@ -90,6 +102,33 @@ func Test_ReadSeries_OK(t *testing.T) {
 	mock.ExpectQuery(query).WillReturnRows(rows)
 
 	s, err := ReadSeries(db, series.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = EqualSeries(series, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_FindSeries_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	query := fmt.Sprintf("SELECT ID, Title, Image FROM %v", SeriesTable)
+	rows := sqlmock.NewRows([]string{"ID", "Title", "Image"}).
+		AddRow(series.ID, series.Title, series.Image)
+	mock.ExpectQuery(query).WillReturnRows(rows)
+
+	s, err := FindSeriesByTitle(db, series.Title)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,4 +196,142 @@ func Test_ReadEpisodeResource_OK(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func Test_NewUser_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	user := User{
+		ID:       12,
+		Name:     "test",
+		Password: "test",
+	}
+
+	query := fmt.Sprintf("INSERT INTO %v", UserTable)
+	mock.ExpectExec(query).
+		WithArgs(user.Name, NewSha512Password(user.Password)).
+		WillReturnResult(sqlmock.NewResult(user.ID, 1))
+
+	id, err := NewUser(db, user)
+
+	if id != user.ID {
+		t.Fatal("Expect", user.ID, "was", id)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_ReadUser_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	user := User{
+		ID:       14,
+		Name:     "peacemaker",
+		Password: "Fuckoff",
+	}
+
+	m := "SELECT ID,Name,Password FROM %v"
+	q := fmt.Sprintf(m, UserTable)
+	rows := sqlmock.NewRows([]string{"ID", "Name", "Password"}).
+		AddRow(user.ID, user.Name, user.Password)
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	result, err := ReadUser(db, user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = EqualUser(user, result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+}
+
+func Test_FindUserByName_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	user := User{
+		ID:       14,
+		Name:     "peacemaker",
+		Password: "Fuckoff",
+	}
+
+	m := "SELECT ID,Name,Password FROM %v"
+	q := fmt.Sprintf(m, UserTable)
+	rows := sqlmock.NewRows([]string{"ID", "Name", "Password"}).
+		AddRow(user.ID, user.Name, user.Password)
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	result, err := FindUserByName(db, user.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = EqualUser(user, result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_UserStoreFindUserAndValidatedPassword_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	user := User{
+		ID:       14,
+		Name:     "peacemaker",
+		Password: "Fuckoff",
+	}
+
+	m := "SELECT ID,Name,Password FROM %v"
+	q := fmt.Sprintf(m, UserTable)
+	rows := sqlmock.NewRows([]string{"ID", "Name", "Password"}).
+		AddRow(user.ID, user.Name, NewSha512Password(user.Password))
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	userStore := NewUserStore(db)
+
+	result, err := userStore.FindUser(user.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if strconv.FormatInt(user.ID, 10) != result.ID() ||
+		NewSha512Password(user.Password) != result.Password() {
+		t.Fatal("Expect", user, "was", result)
+	}
+
+	if !userStore.ValidPassword(user.Password) {
+		t.Fatal("Expect", user.Password, "to be correct")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 }
