@@ -22,6 +22,8 @@ type (
 		Image string
 	}
 
+	SeriesList []Series
+
 	EpisodeResource struct {
 		ID       int64
 		SeriesID int64
@@ -221,7 +223,7 @@ func FindUserByName(db *sql.DB, name string) (User, error) {
 		return User{}, err
 	}
 
-	m := "SELECT ID,Name,Password FROM %v WHERE Name=%v"
+	m := "SELECT ID,Name,Password FROM %v WHERE Name='%v'"
 	q := fmt.Sprintf(m, UserTable, name)
 
 	var id int64
@@ -277,11 +279,51 @@ func (u kauthUser) Password() string {
 }
 
 func AppendSeriesList(db *sql.DB, userID, seriesID int64) error {
+	err := db.Ping()
+	if err != nil {
+		return err
+	}
 	q := fmt.Sprintf("INSERT INTO %v VALUES(?, ?)", SeriesListTable)
-	_, err := db.Exec(q, userID, seriesID)
+	_, err = db.Exec(q, userID, seriesID)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func ReadSeriesList(db *sql.DB, userID int64) (SeriesList, error) {
+	m := `
+	SELECT series.ID as ID, series.Title as Title, series.Image as Image
+	FROM %v as series, %v as list 
+	WHERE list.User_ID=%v
+	AND series.Series_ID=list.Series_ID
+	`
+	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
+
+	rows, err := db.Query(q)
+	if err != nil {
+		return SeriesList{}, err
+	}
+	defer rows.Close()
+
+	sList := SeriesList{}
+	for rows.Next() {
+		var id int64
+		var title string
+		var image string
+		err := rows.Scan(&id, &title, &image)
+		if err != nil {
+			return SeriesList{}, err
+		}
+
+		series := Series{
+			ID:    id,
+			Title: title,
+			Image: image,
+		}
+		sList = append(sList, series)
+	}
+
+	return sList, nil
 }

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tochti/gin-angular-kauth"
 )
 
 type (
@@ -141,6 +142,28 @@ func AppendSeriesListHandler(app AppCtx, c *gin.Context) error {
 	}
 
 	resp := NewSuccessResponse("")
+	c.JSON(http.StatusOK, resp)
+
+	return nil
+}
+
+func ReadSeriesListHandler(app AppCtx, c *gin.Context) error {
+
+	session, err := kauth.ReadSession(c)
+	if err != nil {
+		return err
+	}
+	id, err := strconv.Atoi(session.UserID())
+	if err != nil {
+		return err
+	}
+
+	sList, err := ReadSeriesList(app.DB, int64(id))
+	if err != nil {
+		return err
+	}
+
+	resp := NewSuccessResponse(sList)
 	c.JSON(http.StatusOK, resp)
 
 	return nil

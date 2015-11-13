@@ -58,6 +58,25 @@ func EqualUser(u1, u2 User) error {
 	return nil
 }
 
+func EqualSeriesList(s1, s2 SeriesList) error {
+	if len(s1) != len(s2) {
+		e := fmt.Sprintf("Expect length %v was %v", len(s1), len(s2))
+		errors.New(e)
+	}
+
+	for i, _ := range s1 {
+		if s1[i].ID != s2[i].ID ||
+			s1[i].Title != s2[i].Title ||
+			s1[i].Image != s1[i].Image {
+			m := "Expect %v was %v"
+			e := fmt.Sprintf(m, s1, s2)
+			return errors.New(e)
+		}
+	}
+
+	return nil
+}
+
 func Test_NewSeries_OK(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -357,4 +376,37 @@ func Test_AppendSeriesList_OK(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func Test_ReadSeriesList_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := int64(1)
+	expect := SeriesList{
+		{0, "Mr. Robot", "robot.png"},
+		{1, "Narcos", "narcos.png"},
+	}
+	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list WHERE list.User_ID=%v AND series.Series_ID=list.Series_ID`
+	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
+	rows := sqlmock.NewRows([]string{"ID", "Title", "Image"})
+
+	for _, s := range expect {
+		rows.AddRow(s.ID, s.Title, s.Image)
+	}
+
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	seriesList, err := ReadSeriesList(db, userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = EqualSeriesList(expect, seriesList)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 }

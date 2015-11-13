@@ -8,11 +8,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
+	"time"
 
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tochti/gin-angular-kauth"
+	"github.com/tochti/smem"
 )
 
 type (
@@ -157,6 +161,80 @@ func Test_PATCH_SeriesList_OK(t *testing.T) {
 
 	expect := NewSuccessResponse("")
 	err = EqualResponse(expect, resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_ReadSeriesListHandler_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := int64(1)
+	expect := SeriesList{
+		{0, "Mr. Robot", "robot.png"},
+		{1, "Narcos", "narcos.png"},
+	}
+
+	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list WHERE list.User_ID=%v AND series.Series_ID=list.Series_ID`
+	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
+	rows := sqlmock.NewRows([]string{"ID", "Title", "Image"})
+
+	for _, s := range expect {
+		rows.AddRow(s.ID, s.Title, s.Image)
+	}
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	app := AppCtx{
+		DB: db,
+	}
+
+	sessionStore := smem.NewStore()
+	expires := time.Now().Add(1 * time.Hour)
+	tmp := strconv.FormatInt(userID, 10)
+	session, err := sessionStore.NewSession(tmp, expires)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	srv := gin.New()
+	readSeriesHandler := NewAppHandler(app, ReadSeriesListHandler)
+	signedIn := kauth.SignedIn(&sessionStore)
+	h := signedIn(readSeriesHandler)
+	srv.GET("/", h)
+
+	body := `
+	{
+		"Data": [
+			{
+				"ID": 0,
+				"Title": "Mr. Robot", 
+				"Image": "robot.png"
+			},
+			{
+				"ID": 1,
+				"Title": "Narcos",
+				"Image": "narcos.png"
+			}
+		]
+	}
+	`
+
+	req := TestRequest{
+		Body:    body,
+		Handler: srv,
+		Header:  http.Header{},
+	}
+	resp := req.SendWithToken("GET", "/", session.Token())
+
+	if 200 != resp.Code {
+		t.Fatal("Expect 200 was", resp.Code)
+	}
+
+	expectResp := NewSuccessResponse(expect)
+	err = EqualResponse(expectResp, resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}

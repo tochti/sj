@@ -18,4 +18,13 @@ CREATE TABLE Episodes (
 	Session int,
 	Episode int,
 	FOREIGN KEY(Series_ID) REFERENCES Series(ID)
+);
+CREATE TABLE User(
+	ID INT AUTO_INCREMENT PRIMARY KEY,
+	Name varchar(500),
+	Password varchar(128)
+);
+CREATE TABLE SeriesList(
+	User_ID int
+	Series_ID int
 )
