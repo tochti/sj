@@ -65,12 +65,9 @@ func EqualSeriesList(s1, s2 SeriesList) error {
 	}
 
 	for i, _ := range s1 {
-		if s1[i].ID != s2[i].ID ||
-			s1[i].Title != s2[i].Title ||
-			s1[i].Image != s1[i].Image {
-			m := "Expect %v was %v"
-			e := fmt.Sprintf(m, s1, s2)
-			return errors.New(e)
+		err := EqualSeries(s1[i], s2[i])
+		if err != nil {
+			return err
 		}
 	}
 
