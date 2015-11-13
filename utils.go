@@ -34,6 +34,11 @@ type (
 	JSONRequest struct {
 		Data interface{}
 	}
+
+	SeriesListRequestData struct {
+		UserID   int64
+		SeriesID int64
+	}
 )
 
 func NewApp(name string) (AppCtx, error) {
@@ -51,6 +56,9 @@ func NewApp(name string) (AppCtx, error) {
 		specs.DBName,
 	)
 	db, err := sql.Open("mysql", url)
+	if err != nil {
+		return AppCtx{}, err
+	}
 
 	ctx := AppCtx{
 		Specs: specs,
@@ -121,6 +129,70 @@ func ParseNewSeriesRequest(c *gin.Context) (Series, error) {
 	s := Series{
 		Title: title,
 		Image: image,
+	}
+
+	return s, nil
+}
+
+func ParseNewUserRequest(c *gin.Context) (User, error) {
+	req, err := ParseJSONRequest(c.Request)
+	if err != nil {
+		return User{}, err
+	}
+
+	tmp, ok := req.Data.(map[string]interface{})
+	err = ExistsFields(tmp, []string{"Name", "Password"})
+	if err != nil {
+		return User{}, err
+	}
+
+	name, ok := tmp["Name"].(string)
+	if !ok {
+		m := "Wrong value in Name"
+		return User{}, errors.New(m)
+	}
+
+	pass, ok := tmp["Password"].(string)
+	if !ok {
+		m := "Wrong value in Password"
+		return User{}, errors.New(m)
+	}
+
+	u := User{
+		Name:     name,
+		Password: pass,
+	}
+
+	return u, nil
+}
+
+func ParseAppendSeriesListRequest(c *gin.Context) (SeriesListRequestData, error) {
+	req, err := ParseJSONRequest(c.Request)
+	if err != nil {
+		return SeriesListRequestData{}, err
+	}
+
+	tmp, ok := req.Data.(map[string]interface{})
+	err = ExistsFields(tmp, []string{"UserID", "SeriesID"})
+	if err != nil {
+		return SeriesListRequestData{}, err
+	}
+
+	userID, ok := tmp["UserID"].(float64)
+	if !ok {
+		m := "Wrong value in UserID"
+		return SeriesListRequestData{}, errors.New(m)
+	}
+
+	seriesID, ok := tmp["SeriesID"].(float64)
+	if !ok {
+		m := "Wrong value in UserID"
+		return SeriesListRequestData{}, errors.New(m)
+	}
+
+	s := SeriesListRequestData{
+		UserID:   int64(userID),
+		SeriesID: int64(seriesID),
 	}
 
 	return s, nil

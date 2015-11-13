@@ -327,8 +327,31 @@ func Test_UserStoreFindUserAndValidatedPassword_OK(t *testing.T) {
 		t.Fatal("Expect", user, "was", result)
 	}
 
-	if !userStore.ValidPassword(user.Password) {
+	if !result.ValidPassword(user.Password) {
 		t.Fatal("Expect", user.Password, "to be correct")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_AppendSeriesList_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	userID := int64(2)
+	seriesID := int64(1)
+
+	q := fmt.Sprintf("INSERT INTO %v", SeriesListTable)
+	mock.ExpectExec(q).
+		WithArgs(userID, seriesID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = AppendSeriesList(db, userID, seriesID)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

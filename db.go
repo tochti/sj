@@ -12,6 +12,7 @@ const (
 	SeriesTable           = "Series"
 	EpisodesResourceTable = "EpisodeResource"
 	UserTable             = "User"
+	SeriesListTable       = "SeriesList"
 )
 
 type (
@@ -263,8 +264,8 @@ func (s *userStore) FindUser(name string) (kauth.User, error) {
 	return kuser, nil
 }
 
-func (s *userStore) ValidPassword(pass string) bool {
-	return s.user.Password == NewSha512Password(pass)
+func (u kauthUser) ValidPassword(pass string) bool {
+	return u.password == NewSha512Password(pass)
 }
 
 func (u kauthUser) ID() string {
@@ -273,4 +274,14 @@ func (u kauthUser) ID() string {
 
 func (u kauthUser) Password() string {
 	return u.password
+}
+
+func AppendSeriesList(db *sql.DB, userID, seriesID int64) error {
+	q := fmt.Sprintf("INSERT INTO %v VALUES(?, ?)", SeriesListTable)
+	_, err := db.Exec(q, userID, seriesID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
