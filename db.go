@@ -55,6 +55,15 @@ type (
 		db   *sql.DB
 		user User
 	}
+
+	LastWatched struct {
+		UserID      int64
+		SeriesID    int64
+		LastSession int
+		LastEpisode int
+	}
+
+	LastWatchedList []LastWatched
 )
 
 func NewSeries(db *sql.DB, s Series) (int64, error) {
@@ -345,4 +354,46 @@ func UpdateLastWatched(db *sql.DB, userID, seriesID int64, lastSession, lastEpis
 	}
 
 	return nil
+}
+
+func ReadLastWatchedList(db *sql.DB, userID int64) (LastWatchedList, error) {
+	err := db.Ping()
+	if err != nil {
+		return LastWatchedList{}, err
+	}
+
+	s := `
+	SELECT Series_ID, LastSession, LastEpisode
+	FROM %v
+	WHERE User_ID=%v
+	`
+	q := fmt.Sprintf(s, LastWatchedTable, userID)
+	rows, err := db.Query(q)
+	if err != nil {
+		return LastWatchedList{}, err
+	}
+	defer rows.Close()
+
+	wList := LastWatchedList{}
+	for rows.Next() {
+		var seriesID int64
+		var lastSession int
+		var lastEpisode int
+
+		err := rows.Scan(&seriesID, &lastSession, &lastEpisode)
+		if err != nil {
+			return LastWatchedList{}, err
+		}
+
+		tmp := LastWatched{
+			UserID:      userID,
+			SeriesID:    seriesID,
+			LastSession: lastSession,
+			LastEpisode: lastEpisode,
+		}
+		wList = append(wList, tmp)
+
+	}
+
+	return wList, nil
 }

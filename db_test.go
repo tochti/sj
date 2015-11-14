@@ -58,6 +58,33 @@ func EqualUser(u1, u2 User) error {
 	return nil
 }
 
+func EqualLastWatched(w1, w2 LastWatched) error {
+	if w1.SeriesID != w2.SeriesID ||
+		w1.LastSession != w2.LastSession ||
+		w1.LastEpisode != w2.LastEpisode {
+		m := fmt.Sprintf("Expect %v was %v", w1, w2)
+		return errors.New(m)
+	}
+
+	return nil
+}
+
+func EqualLastWatchedList(s1, s2 LastWatchedList) error {
+	if len(s1) != len(s2) {
+		e := fmt.Sprintf("Expect length %v was %v", len(s1), len(s2))
+		errors.New(e)
+	}
+
+	for i, _ := range s1 {
+		err := EqualLastWatched(s1[i], s2[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func EqualSeriesList(s1, s2 SeriesList) error {
 	if len(s1) != len(s2) {
 		e := fmt.Sprintf("Expect length %v was %v", len(s1), len(s2))
@@ -427,6 +454,42 @@ func Test_UpdateLastWatched_OK(t *testing.T) {
 	err = UpdateLastWatched(db, userID, seriesID, lastSession, lastEpisode)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+}
+
+func Test_ReadLastWatchedList_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := int64(1)
+	expect := LastWatchedList{
+		{userID, int64(1), 2, 3},
+		{userID, int64(2), 4, 5},
+	}
+
+	s := "SELECT Series_ID, LastSession, LastEpisode FROM %v WHERE User_ID=%v"
+	q := fmt.Sprintf(s, LastWatchedTable, userID)
+	rows := sqlmock.NewRows([]string{
+		"Series_ID", "LastSession", "LastEpisod",
+	})
+
+	for _, s := range expect {
+		rows.AddRow(s.SeriesID, s.LastSession, s.LastEpisode)
+	}
+
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	watchedList, err := ReadLastWatchedList(db, userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = EqualLastWatchedList(expect, watchedList)
+	if err != nil {
 		t.Fatal(err)
 	}
 
