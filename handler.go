@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -54,24 +55,47 @@ func NewAppHandler(app AppCtx, fn AppHandler) gin.HandlerFunc {
 }
 
 func NewSeriesHandler(app AppCtx, c *gin.Context) error {
+
+	session, err := kauth.ReadSession(c)
+	if err != nil {
+		return err
+	}
+
 	s, err := ParseNewSeriesRequest(c)
 	if err != nil {
 		return err
 	}
 
-	name, err := SaveImage(s.Image, app.Specs.ImageDir)
+	imgDir := app.Specs.ImageDir
+	name, err := SaveImage(s.Image, imgDir)
 	if err != nil {
 		return err
 	}
+	imgPath := path.Join(imgDir, name)
 
 	s.Image = name
 
-	id, err := NewSeries(app.DB, s)
+	seriesID, err := NewSeries(app.DB, s)
 	if err != nil {
+		removeImage(imgPath)
 		return err
 	}
 
-	s.ID = id
+	userID, err := strconv.Atoi(session.UserID())
+	if err != nil {
+		// todo(tochti):remove series
+		removeImage(imgPath)
+		return err
+	}
+
+	err = AppendSeriesList(app.DB, int64(userID), seriesID)
+	if err != nil {
+		// todo(tochti):remove series
+		removeImage(imgPath)
+		return err
+	}
+
+	s.ID = seriesID
 
 	resp := NewSuccessResponse(s)
 	c.JSON(http.StatusOK, resp)
