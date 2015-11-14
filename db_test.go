@@ -60,8 +60,8 @@ func EqualUser(u1, u2 User) error {
 
 func EqualLastWatched(w1, w2 LastWatched) error {
 	if w1.SeriesID != w2.SeriesID ||
-		w1.LastSession != w2.LastSession ||
-		w1.LastEpisode != w2.LastEpisode {
+		w1.Session != w2.Session ||
+		w1.Episode != w2.Episode {
 		m := fmt.Sprintf("Expect %v was %v", w1, w2)
 		return errors.New(m)
 	}
@@ -452,10 +452,10 @@ func Test_UpdateLastWatched_OK(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	lastWatched := LastWatched{
-		UserID:      userID,
-		SeriesID:    seriesID,
-		LastSession: lastSession,
-		LastEpisode: lastEpisode,
+		UserID:   userID,
+		SeriesID: seriesID,
+		Session:  lastSession,
+		Episode:  lastEpisode,
 	}
 	err = UpdateLastWatched(db, lastWatched)
 
@@ -477,14 +477,14 @@ func Test_ReadLastWatchedList_OK(t *testing.T) {
 		{userID, int64(2), 4, 5},
 	}
 
-	s := "SELECT Series_ID, LastSession, LastEpisode FROM %v WHERE User_ID=%v"
+	s := "SELECT Series_ID, Session, Episode FROM %v WHERE User_ID=%v"
 	q := fmt.Sprintf(s, LastWatchedTable, userID)
 	rows := sqlmock.NewRows([]string{
-		"Series_ID", "LastSession", "LastEpisod",
+		"Series_ID", "Session", "Episode",
 	})
 
 	for _, s := range expect {
-		rows.AddRow(s.SeriesID, s.LastSession, s.LastEpisode)
+		rows.AddRow(s.SeriesID, s.Session, s.Episode)
 	}
 
 	mock.ExpectQuery(q).WillReturnRows(rows)

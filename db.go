@@ -57,10 +57,10 @@ type (
 	}
 
 	LastWatched struct {
-		UserID      int64
-		SeriesID    int64
-		LastSession int
-		LastEpisode int
+		UserID   int64
+		SeriesID int64
+		Session  int
+		Episode  int
 	}
 
 	LastWatchedList []LastWatched
@@ -348,7 +348,7 @@ func UpdateLastWatched(db *sql.DB, lastWatched LastWatched) error {
 	s := "REPLACE INTO %v VALUES (?, ?, ?, ?)"
 	q := fmt.Sprintf(s, LastWatchedTable)
 	_, err = db.Exec(q, lastWatched.UserID, lastWatched.SeriesID,
-		lastWatched.LastSession, lastWatched.LastEpisode)
+		lastWatched.Session, lastWatched.Episode)
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ func ReadLastWatchedList(db *sql.DB, userID int64) (LastWatchedList, error) {
 	}
 
 	s := `
-	SELECT Series_ID, LastSession, LastEpisode
+	SELECT Series_ID, Session, Episode
 	FROM %v
 	WHERE User_ID=%v
 	`
@@ -386,10 +386,10 @@ func ReadLastWatchedList(db *sql.DB, userID int64) (LastWatchedList, error) {
 		}
 
 		tmp := LastWatched{
-			UserID:      userID,
-			SeriesID:    seriesID,
-			LastSession: lastSession,
-			LastEpisode: lastEpisode,
+			UserID:   userID,
+			SeriesID: seriesID,
+			Session:  lastSession,
+			Episode:  lastEpisode,
 		}
 		wList = append(wList, tmp)
 

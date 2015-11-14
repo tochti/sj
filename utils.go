@@ -244,7 +244,7 @@ func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatched, error) {
 
 	tmp, ok := req.Data.(map[string]interface{})
 	err = ExistsFields(tmp, []string{
-		"SeriesID", "LastSession", "LastEpisode",
+		"SeriesID", "Session", "Episode",
 	})
 	if err != nil {
 		return LastWatched{}, err
@@ -256,22 +256,22 @@ func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatched, error) {
 		return LastWatched{}, errors.New(m)
 	}
 
-	lastSession, ok := tmp["LastSession"].(float64)
+	lastSession, ok := tmp["Session"].(float64)
 	if !ok {
-		m := "Wrong value in LastSession"
+		m := "Wrong value in Session"
 		return LastWatched{}, errors.New(m)
 	}
 
-	lastEpisode, ok := tmp["LastEpisode"].(float64)
+	lastEpisode, ok := tmp["Episode"].(float64)
 	if !ok {
-		m := "Wrong value in LastEpisode"
+		m := "Wrong value in Episode"
 		return LastWatched{}, errors.New(m)
 	}
 
 	w := LastWatched{
-		SeriesID:    int64(seriesID),
-		LastSession: int(lastSession),
-		LastEpisode: int(lastEpisode),
+		SeriesID: int64(seriesID),
+		Session:  int(lastSession),
+		Episode:  int(lastEpisode),
 	}
 
 	return w, nil

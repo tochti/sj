@@ -287,8 +287,8 @@ func Test_POST_UpdateLastWatched_OK(t *testing.T) {
 	{
 		"Data": {
 			"SeriesID": 2,
-			"LastSession": 3,
-			"LastEpisode": 4
+			"Session": 3,
+			"Episode": 4
 		}
 	}
 	`
@@ -305,10 +305,10 @@ func Test_POST_UpdateLastWatched_OK(t *testing.T) {
 	}
 
 	expect := NewSuccessResponse(LastWatched{
-		UserID:      userID,
-		SeriesID:    seriesID,
-		LastSession: lastSession,
-		LastEpisode: lastEpisode,
+		UserID:   userID,
+		SeriesID: seriesID,
+		Session:  lastSession,
+		Episode:  lastEpisode,
 	})
 	err = EqualResponse(expect, resp.Body)
 	if err != nil {
@@ -329,14 +329,14 @@ func Test_GET_LastWatchedList_OK(t *testing.T) {
 		{userID, int64(2), 4, 5},
 	}
 
-	s := "SELECT Series_ID, LastSession, LastEpisode FROM %v WHERE User_ID=%v"
+	s := "SELECT Series_ID, Session, Episode FROM %v WHERE User_ID=%v"
 	q := fmt.Sprintf(s, LastWatchedTable, userID)
 	rows := sqlmock.NewRows([]string{
-		"Series_ID", "LastSession", "LastEpisod",
+		"Series_ID", "Session", "Episode",
 	})
 
 	for _, s := range expect {
-		rows.AddRow(s.SeriesID, s.LastSession, s.LastEpisode)
+		rows.AddRow(s.SeriesID, s.Session, s.Episode)
 	}
 
 	mock.ExpectQuery(q).WillReturnRows(rows)

@@ -114,8 +114,8 @@ func Test_ParseUpdateLastWatchedRequest_OK(t *testing.T) {
 		"Data": {
 			"UserID": 1,
 			"SeriesID": 2,
-			"LastSession": 3,
-			"LastEpisode": 4
+			"Session": 3,
+			"Episode": 4
 		}
 	}`
 
@@ -134,14 +134,14 @@ func Test_ParseUpdateLastWatchedRequest_OK(t *testing.T) {
 	}
 
 	expect := LastWatched{
-		SeriesID:    2,
-		LastSession: 3,
-		LastEpisode: 4,
+		SeriesID: 2,
+		Session:  3,
+		Episode:  4,
 	}
 
 	if expect.SeriesID != s.SeriesID ||
-		expect.LastSession != s.LastSession ||
-		expect.LastEpisode != s.LastEpisode {
+		expect.Session != s.Session ||
+		expect.Episode != s.Episode {
 		m := fmt.Sprintf("Expect %v was %v", expect, s)
 		t.Fatal(m)
 	}
