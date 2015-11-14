@@ -219,8 +219,9 @@ func UpdateLastWatchedHandler(app AppCtx, c *gin.Context) error {
 		return err
 	}
 
-	err = UpdateLastWatched(app.DB, int64(userID), lastWatched.SeriesID,
-		lastWatched.LastSession, lastWatched.LastEpisode)
+	lastWatched.UserID = int64(userID)
+
+	err = UpdateLastWatched(app.DB, lastWatched)
 	if err != nil {
 		return err
 	}

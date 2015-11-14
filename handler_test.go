@@ -304,7 +304,8 @@ func Test_POST_UpdateLastWatched_OK(t *testing.T) {
 		t.Fatal("Expect 200 was", resp.Code)
 	}
 
-	expect := NewSuccessResponse(LastWatchedRequestData{
+	expect := NewSuccessResponse(LastWatched{
+		UserID:      userID,
 		SeriesID:    seriesID,
 		LastSession: lastSession,
 		LastEpisode: lastEpisode,

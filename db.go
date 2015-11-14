@@ -338,7 +338,7 @@ func ReadSeriesList(db *sql.DB, userID int64) (SeriesList, error) {
 	return sList, nil
 }
 
-func UpdateLastWatched(db *sql.DB, userID, seriesID int64, lastSession, lastEpisode int) error {
+func UpdateLastWatched(db *sql.DB, lastWatched LastWatched) error {
 
 	err := db.Ping()
 	if err != nil {
@@ -347,8 +347,8 @@ func UpdateLastWatched(db *sql.DB, userID, seriesID int64, lastSession, lastEpis
 
 	s := "REPLACE INTO %v VALUES (?, ?, ?, ?)"
 	q := fmt.Sprintf(s, LastWatchedTable)
-	_, err = db.Exec(q, userID, seriesID,
-		lastSession, lastEpisode)
+	_, err = db.Exec(q, lastWatched.UserID, lastWatched.SeriesID,
+		lastWatched.LastSession, lastWatched.LastEpisode)
 	if err != nil {
 		return err
 	}

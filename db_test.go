@@ -451,7 +451,13 @@ func Test_UpdateLastWatched_OK(t *testing.T) {
 		WithArgs(userID, seriesID, lastSession, lastEpisode).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = UpdateLastWatched(db, userID, seriesID, lastSession, lastEpisode)
+	lastWatched := LastWatched{
+		UserID:      userID,
+		SeriesID:    seriesID,
+		LastSession: lastSession,
+		LastEpisode: lastEpisode,
+	}
+	err = UpdateLastWatched(db, lastWatched)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

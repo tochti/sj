@@ -43,12 +43,6 @@ type (
 	SeriesListRequestData struct {
 		SeriesID int64
 	}
-
-	LastWatchedRequestData struct {
-		SeriesID    int64
-		LastSession int
-		LastEpisode int
-	}
 )
 
 func NewApp(name string) (AppCtx, error) {
@@ -242,10 +236,10 @@ func ParseAppendSeriesListRequest(c *gin.Context) (SeriesListRequestData, error)
 	return s, nil
 }
 
-func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatchedRequestData, error) {
+func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatched, error) {
 	req, err := ParseJSONRequest(c.Request)
 	if err != nil {
-		return LastWatchedRequestData{}, err
+		return LastWatched{}, err
 	}
 
 	tmp, ok := req.Data.(map[string]interface{})
@@ -253,28 +247,28 @@ func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatchedRequestData, erro
 		"SeriesID", "LastSession", "LastEpisode",
 	})
 	if err != nil {
-		return LastWatchedRequestData{}, err
+		return LastWatched{}, err
 	}
 
 	seriesID, ok := tmp["SeriesID"].(float64)
 	if !ok {
 		m := "Wrong value in SeriesID"
-		return LastWatchedRequestData{}, errors.New(m)
+		return LastWatched{}, errors.New(m)
 	}
 
 	lastSession, ok := tmp["LastSession"].(float64)
 	if !ok {
 		m := "Wrong value in LastSession"
-		return LastWatchedRequestData{}, errors.New(m)
+		return LastWatched{}, errors.New(m)
 	}
 
 	lastEpisode, ok := tmp["LastEpisode"].(float64)
 	if !ok {
 		m := "Wrong value in LastEpisode"
-		return LastWatchedRequestData{}, errors.New(m)
+		return LastWatched{}, errors.New(m)
 	}
 
-	w := LastWatchedRequestData{
+	w := LastWatched{
 		SeriesID:    int64(seriesID),
 		LastSession: int(lastSession),
 		LastEpisode: int(lastEpisode),

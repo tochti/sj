@@ -133,7 +133,7 @@ func Test_ParseUpdateLastWatchedRequest_OK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expect := LastWatchedRequestData{
+	expect := LastWatched{
 		SeriesID:    2,
 		LastSession: 3,
 		LastEpisode: 4,
