@@ -136,8 +136,19 @@ func Test_PATCH_SeriesList_OK(t *testing.T) {
 	app := AppCtx{
 		DB: db,
 	}
+
+	sessionStore := smem.NewStore()
+	expires := time.Now().Add(1 * time.Hour)
+	tmp := strconv.FormatInt(userID, 10)
+	session, err := sessionStore.NewSession(tmp, expires)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	srv := gin.New()
-	srv.POST("/", NewAppHandler(app, AppendSeriesListHandler))
+	signedIn := kauth.SignedIn(&sessionStore)
+	h := NewAppHandler(app, AppendSeriesListHandler)
+	srv.POST("/", signedIn(h))
 
 	body := `
 	{
@@ -153,7 +164,7 @@ func Test_PATCH_SeriesList_OK(t *testing.T) {
 		Handler: srv,
 		Header:  http.Header{},
 	}
-	resp := req.Send("POST", "/")
+	resp := req.SendWithToken("POST", "/", session.Token())
 
 	if 200 != resp.Code {
 		t.Fatal("Expect 200 was", resp.Code)
@@ -235,6 +246,70 @@ func Test_ReadSeriesListHandler_OK(t *testing.T) {
 
 	expectResp := NewSuccessResponse(expect)
 	err = EqualResponse(expectResp, resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_POST_UpdateLastWatched_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := int64(1)
+	seriesID := int64(2)
+	lastSession := 3
+	lastEpisode := 4
+
+	q := fmt.Sprintf("REPLACE INTO %v", LastWatchedTable)
+	mock.ExpectExec(q).
+		WithArgs(userID, seriesID, lastSession, lastEpisode).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	sessionStore := smem.NewStore()
+	expires := time.Now().Add(1 * time.Hour)
+	tmp := strconv.FormatInt(userID, 10)
+	session, err := sessionStore.NewSession(tmp, expires)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	app := AppCtx{
+		DB: db,
+	}
+	srv := gin.New()
+	signedIn := kauth.SignedIn(&sessionStore)
+	lastWatchedHandler := NewAppHandler(app, UpdateLastWatchedHandler)
+	srv.POST("/", signedIn(lastWatchedHandler))
+
+	body := `
+	{
+		"Data": {
+			"SeriesID": 2,
+			"LastSession": 3,
+			"LastEpisode": 4
+		}
+	}
+	`
+
+	req := TestRequest{
+		Body:    body,
+		Handler: srv,
+		Header:  http.Header{},
+	}
+	resp := req.SendWithToken("POST", "/", session.Token())
+
+	if 200 != resp.Code {
+		t.Fatal("Expect 200 was", resp.Code)
+	}
+
+	expect := NewSuccessResponse(LastWatchedRequestData{
+		SeriesID:    seriesID,
+		LastSession: lastSession,
+		LastEpisode: lastEpisode,
+	})
+	err = EqualResponse(expect, resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}

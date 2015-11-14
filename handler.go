@@ -157,12 +157,21 @@ func NewUserHandler(app AppCtx, c *gin.Context) error {
 }
 
 func AppendSeriesListHandler(app AppCtx, c *gin.Context) error {
+	session, err := kauth.ReadSession(c)
+	if err != nil {
+		return err
+	}
+	userID, err := strconv.Atoi(session.UserID())
+	if err != nil {
+		return err
+	}
+
 	data, err := ParseAppendSeriesListRequest(c)
 	if err != nil {
 		return err
 	}
 
-	err = AppendSeriesList(app.DB, data.UserID, data.SeriesID)
+	err = AppendSeriesList(app.DB, int64(userID), data.SeriesID)
 	if err != nil {
 		return err
 	}
@@ -190,6 +199,33 @@ func ReadSeriesListHandler(app AppCtx, c *gin.Context) error {
 	}
 
 	resp := NewSuccessResponse(sList)
+	c.JSON(http.StatusOK, resp)
+
+	return nil
+}
+
+func UpdateLastWatchedHandler(app AppCtx, c *gin.Context) error {
+	session, err := kauth.ReadSession(c)
+	if err != nil {
+		return err
+	}
+	userID, err := strconv.Atoi(session.UserID())
+	if err != nil {
+		return err
+	}
+
+	lastWatched, err := ParseUpdateLastWatchedRequest(c)
+	if err != nil {
+		return err
+	}
+
+	err = UpdateLastWatched(app.DB, int64(userID), lastWatched.SeriesID,
+		lastWatched.LastSession, lastWatched.LastEpisode)
+	if err != nil {
+		return err
+	}
+
+	resp := NewSuccessResponse(lastWatched)
 	c.JSON(http.StatusOK, resp)
 
 	return nil

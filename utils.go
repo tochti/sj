@@ -41,8 +41,13 @@ type (
 	}
 
 	SeriesListRequestData struct {
-		UserID   int64
 		SeriesID int64
+	}
+
+	LastWatchedRequestData struct {
+		SeriesID    int64
+		LastSession int
+		LastEpisode int
 	}
 )
 
@@ -219,15 +224,9 @@ func ParseAppendSeriesListRequest(c *gin.Context) (SeriesListRequestData, error)
 	}
 
 	tmp, ok := req.Data.(map[string]interface{})
-	err = ExistsFields(tmp, []string{"UserID", "SeriesID"})
+	err = ExistsFields(tmp, []string{"SeriesID"})
 	if err != nil {
 		return SeriesListRequestData{}, err
-	}
-
-	userID, ok := tmp["UserID"].(float64)
-	if !ok {
-		m := "Wrong value in UserID"
-		return SeriesListRequestData{}, errors.New(m)
 	}
 
 	seriesID, ok := tmp["SeriesID"].(float64)
@@ -237,13 +236,52 @@ func ParseAppendSeriesListRequest(c *gin.Context) (SeriesListRequestData, error)
 	}
 
 	s := SeriesListRequestData{
-		UserID:   int64(userID),
 		SeriesID: int64(seriesID),
 	}
 
 	return s, nil
 }
 
+func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatchedRequestData, error) {
+	req, err := ParseJSONRequest(c.Request)
+	if err != nil {
+		return LastWatchedRequestData{}, err
+	}
+
+	tmp, ok := req.Data.(map[string]interface{})
+	err = ExistsFields(tmp, []string{
+		"SeriesID", "LastSession", "LastEpisode",
+	})
+	if err != nil {
+		return LastWatchedRequestData{}, err
+	}
+
+	seriesID, ok := tmp["SeriesID"].(float64)
+	if !ok {
+		m := "Wrong value in SeriesID"
+		return LastWatchedRequestData{}, errors.New(m)
+	}
+
+	lastSession, ok := tmp["LastSession"].(float64)
+	if !ok {
+		m := "Wrong value in LastSession"
+		return LastWatchedRequestData{}, errors.New(m)
+	}
+
+	lastEpisode, ok := tmp["LastEpisode"].(float64)
+	if !ok {
+		m := "Wrong value in LastEpisode"
+		return LastWatchedRequestData{}, errors.New(m)
+	}
+
+	w := LastWatchedRequestData{
+		SeriesID:    int64(seriesID),
+		LastSession: int(lastSession),
+		LastEpisode: int(lastEpisode),
+	}
+
+	return w, nil
+}
 func NewSha512Password(pass string) string {
 	hash := sha512.New()
 	tmp := hash.Sum([]byte(pass))
