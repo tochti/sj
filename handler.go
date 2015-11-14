@@ -59,17 +59,19 @@ func NewSeriesHandler(app AppCtx, c *gin.Context) error {
 		return err
 	}
 
+	name, err := SaveImage(s.Image, app.Specs.ImageDir)
+	if err != nil {
+		return err
+	}
+
+	s.Image = name
+
 	id, err := NewSeries(app.DB, s)
 	if err != nil {
 		return err
 	}
 
 	s.ID = id
-
-	err = SaveImage(s.Image, app.Specs.ImageDir)
-	if err != nil {
-		return err
-	}
 
 	resp := NewSuccessResponse(s)
 	c.JSON(http.StatusOK, resp)

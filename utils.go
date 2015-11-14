@@ -1,13 +1,18 @@
 package sj
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/sha1"
 	"crypto/sha512"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"path"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kelseyhightower/envconfig"
@@ -68,8 +73,44 @@ func NewApp(name string) (AppCtx, error) {
 	return ctx, nil
 }
 
-func SaveImage(url, p string) error {
-	return nil
+func SaveImage(url, p string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+
+	reader := bufio.NewReader(resp.Body)
+	buf := bytes.NewBuffer([]byte{})
+
+	_, err = reader.WriteTo(buf)
+	if err != nil {
+		return "", err
+	}
+
+	content := buf.Bytes()
+
+	hash := NewSha1Hash(content)
+	ext := path.Ext(url)
+	filename := hash + ext
+	file := path.Join(p, filename)
+
+	if _, err := os.Stat(file); !os.IsNotExist(err) {
+		e := fmt.Sprintf("%v exists already", file)
+		return "", errors.New(e)
+	}
+
+	err = ioutil.WriteFile(file, content, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	return filename, nil
+}
+
+func NewSha1Hash(by []byte) string {
+	hash := sha1.Sum(by)
+	hex := fmt.Sprintf("%x", hash)
+	return hex
 }
 
 func ParseJSONRequest(r *http.Request) (JSONRequest, error) {
