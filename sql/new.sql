@@ -1,18 +1,18 @@
 CREATE DATABASE IF NOT EXISTS sj ;
 CREATE TABLE Series (
-	ID INT AUTO_INCREMENT PRIMARY KEY,
+	ID int AUTO_INCREMENT PRIMARY KEY,
 	Title varchar(250),
 	Image varchar(500)
 );
 CREATE TABLE EpisodesResource (
-	ID INT AUTO_INCREMENT PRIMARY KEY,
+	ID int AUTO_INCREMENT PRIMARY KEY,
 	Series_ID int,
 	Name varchar(250),
 	URL varchar(500),
 	FOREIGN KEY(Series_ID) REFERENCES Series(ID)
 );
 CREATE TABLE Episodes (
-	ID INT AUTO_INCREMENT PRIMARY KEY,
+	ID int AUTO_INCREMENT PRIMARY KEY,
 	Series_ID int,
 	Title varchar(500),
 	Session int,
@@ -20,11 +20,11 @@ CREATE TABLE Episodes (
 	FOREIGN KEY(Series_ID) REFERENCES Series(ID)
 );
 CREATE TABLE User(
-	ID INT AUTO_INCREMENT PRIMARY KEY,
+	ID int AUTO_INCREMENT PRIMARY KEY,
 	Name varchar(500),
-	Password varchar(128)
+	Password varchar(136)
 );
-CREATE TABLE SeriesList(
-	User_ID int
+CREATE TABLE SeriesList (
+	User_ID int,
 	Series_ID int
 )
