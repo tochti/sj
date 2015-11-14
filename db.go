@@ -297,7 +297,7 @@ func ReadSeriesList(db *sql.DB, userID int64) (SeriesList, error) {
 	SELECT series.ID as ID, series.Title as Title, series.Image as Image
 	FROM %v as series, %v as list 
 	WHERE list.User_ID=%v
-	AND series.Series_ID=list.Series_ID
+	AND series.ID=list.Series_ID
 	`
 	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
 

@@ -386,7 +386,7 @@ func Test_ReadSeriesList_OK(t *testing.T) {
 		{0, "Mr. Robot", "robot.png"},
 		{1, "Narcos", "narcos.png"},
 	}
-	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list WHERE list.User_ID=%v AND series.Series_ID=list.Series_ID`
+	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list WHERE list.User_ID=%v AND series.ID=list.Series_ID`
 	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
 	rows := sqlmock.NewRows([]string{"ID", "Title", "Image"})
 
