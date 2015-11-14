@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS sj ;
+CREATE DATABASE IF NOT EXISTS sj;
 CREATE TABLE Series (
 	ID int AUTO_INCREMENT PRIMARY KEY,
 	Title varchar(250),
@@ -25,6 +25,14 @@ CREATE TABLE User(
 	Password varchar(136)
 );
 CREATE TABLE SeriesList (
-	User_ID int,
-	Series_ID int
+	User_ID int NOT NULL,
+	Series_ID int NOT NULL,
+	PRIMARY KEY (User_ID, Series_ID)
+);
+CREATE TABLE LastWatched (
+	User_ID int NOT NULL,
+	Series_ID int NOT NULL,
+	Session int,
+	Episode int,
+	PRIMARY KEY (User_ID, Series_ID)
 )
