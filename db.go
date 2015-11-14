@@ -174,7 +174,7 @@ func NewUser(db *sql.DB, user User) (int64, error) {
 		return -1, err
 	}
 
-	m := "INSERT INTO %v VALUES (?,?)"
+	m := "INSERT INTO %v (Name,Password) VALUES (?,?)"
 	q := fmt.Sprintf(m, UserTable)
 	pass := NewSha512Password(user.Password)
 	rsrc, err := db.Exec(q, user.Name, pass)
