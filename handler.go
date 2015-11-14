@@ -231,3 +231,24 @@ func UpdateLastWatchedHandler(app AppCtx, c *gin.Context) error {
 
 	return nil
 }
+
+func LastWatchedListHandler(app AppCtx, c *gin.Context) error {
+	session, err := kauth.ReadSession(c)
+	if err != nil {
+		return err
+	}
+	userID, err := strconv.Atoi(session.UserID())
+	if err != nil {
+		return err
+	}
+
+	watchedList, err := ReadLastWatchedList(app.DB, int64(userID))
+	if err != nil {
+		return err
+	}
+
+	resp := NewSuccessResponse(watchedList)
+	c.JSON(http.StatusOK, resp)
+
+	return nil
+}

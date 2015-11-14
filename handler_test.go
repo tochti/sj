@@ -315,3 +315,62 @@ func Test_POST_UpdateLastWatched_OK(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func Test_GET_LastWatchedList_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := int64(1)
+
+	expect := LastWatchedList{
+		{userID, int64(1), 2, 3},
+		{userID, int64(2), 4, 5},
+	}
+
+	s := "SELECT Series_ID, LastSession, LastEpisode FROM %v WHERE User_ID=%v"
+	q := fmt.Sprintf(s, LastWatchedTable, userID)
+	rows := sqlmock.NewRows([]string{
+		"Series_ID", "LastSession", "LastEpisod",
+	})
+
+	for _, s := range expect {
+		rows.AddRow(s.SeriesID, s.LastSession, s.LastEpisode)
+	}
+
+	mock.ExpectQuery(q).WillReturnRows(rows)
+	sessionStore := smem.NewStore()
+	expires := time.Now().Add(1 * time.Hour)
+	tmp := strconv.FormatInt(userID, 10)
+	session, err := sessionStore.NewSession(tmp, expires)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	app := AppCtx{
+		DB: db,
+	}
+
+	srv := gin.New()
+	signedIn := kauth.SignedIn(&sessionStore)
+	h := NewAppHandler(app, LastWatchedListHandler)
+	srv.GET("/", signedIn(h))
+
+	req := TestRequest{
+		Body:    "",
+		Handler: srv,
+		Header:  http.Header{},
+	}
+	resp := req.SendWithToken("GET", "/", session.Token())
+
+	if 200 != resp.Code {
+		t.Fatal("Expect 200 was", resp.Code)
+	}
+
+	expectResp := NewSuccessResponse(expect)
+	err = EqualResponse(expectResp, resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
