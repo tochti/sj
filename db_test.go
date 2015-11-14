@@ -407,3 +407,27 @@ func Test_ReadSeriesList_OK(t *testing.T) {
 	}
 
 }
+
+func Test_UpdateLastWatched_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := int64(1)
+	seriesID := int64(2)
+	lastSession := 3
+	lastEpisode := 4
+	s := "REPLACE INTO %v"
+	q := fmt.Sprintf(s, LastWatchedTable)
+	mock.ExpectExec(q).
+		WithArgs(userID, seriesID, lastSession, lastEpisode).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = UpdateLastWatched(db, userID, seriesID, lastSession, lastEpisode)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+}

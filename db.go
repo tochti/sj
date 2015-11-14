@@ -13,6 +13,7 @@ const (
 	EpisodesResourceTable = "EpisodeResource"
 	UserTable             = "User"
 	SeriesListTable       = "SeriesList"
+	LastWatchedTable      = "LastWatched"
 )
 
 type (
@@ -326,4 +327,22 @@ func ReadSeriesList(db *sql.DB, userID int64) (SeriesList, error) {
 	}
 
 	return sList, nil
+}
+
+func UpdateLastWatched(db *sql.DB, userID, seriesID int64, lastSession, lastEpisode int) error {
+
+	err := db.Ping()
+	if err != nil {
+		return err
+	}
+
+	s := "REPLACE INTO %v VALUES (?, ?, ?, ?)"
+	q := fmt.Sprintf(s, LastWatchedTable)
+	_, err = db.Exec(q, userID, seriesID,
+		lastSession, lastEpisode)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
