@@ -62,7 +62,7 @@ func NewSeries(db *sql.DB, s Series) (int64, error) {
 		return -1, err
 	}
 
-	q := fmt.Sprintf("INSERT INTO %v VALUES(?, ?)", SeriesTable)
+	q := fmt.Sprintf("INSERT INTO %v (Title,Image) VALUES(?, ?)", SeriesTable)
 	res, err := db.Exec(q, s.Title, s.Image)
 	if err != nil {
 		return -1, err
