@@ -53,13 +53,14 @@ func NewApp(name string) (AppCtx, error) {
 		return AppCtx{}, err
 	}
 
-	url := fmt.Sprintf("%v:%v@%v:%v/%v",
+	url := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v",
 		specs.DBUser,
 		specs.DBPass,
 		specs.DBHost,
 		specs.DBPort,
 		specs.DBName,
 	)
+
 	db, err := sql.Open("mysql", url)
 	if err != nil {
 		return AppCtx{}, err
