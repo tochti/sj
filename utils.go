@@ -95,9 +95,9 @@ func SaveImage(url, p string) (string, error) {
 	filename := hash + ext
 	file := path.Join(p, filename)
 
+	// If the image already exists we don't need to save it again
 	if _, err := os.Stat(file); !os.IsNotExist(err) {
-		e := fmt.Sprintf("%v exists already", file)
-		return "", errors.New(e)
+		return filename, nil
 	}
 
 	err = ioutil.WriteFile(file, content, 0755)
@@ -106,6 +106,10 @@ func SaveImage(url, p string) (string, error) {
 	}
 
 	return filename, nil
+}
+
+func removeImage(p string) error {
+	return os.Remove(p)
 }
 
 func NewSha1Hash(by []byte) string {
