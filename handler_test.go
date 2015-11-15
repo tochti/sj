@@ -189,8 +189,8 @@ func Test_ReadSeriesListHandler_OK(t *testing.T) {
 		{1, "Narcos", "narcos.png"},
 	}
 
-	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list WHERE list.User_ID=%v AND series.ID=list.Series_ID`
-	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
+	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list`
+	q := fmt.Sprintf(m, SeriesTable, SeriesListTable)
 	rows := sqlmock.NewRows([]string{"ID", "Title", "Image"})
 
 	for _, s := range expect {
@@ -329,8 +329,8 @@ func Test_GET_LastWatchedList_OK(t *testing.T) {
 		{userID, int64(2), 4, 5},
 	}
 
-	s := "SELECT Series_ID, Session, Episode FROM %v WHERE User_ID=%v"
-	q := fmt.Sprintf(s, LastWatchedTable, userID)
+	s := "SELECT Series_ID, Session, Episode FROM %v"
+	q := fmt.Sprintf(s, LastWatchedTable)
 	rows := sqlmock.NewRows([]string{
 		"Series_ID", "Session", "Episode",
 	})

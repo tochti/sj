@@ -94,8 +94,8 @@ func ReadSeries(db *sql.DB, id int64) (Series, error) {
 
 	var title string
 	var image string
-	q := fmt.Sprintf("SELECT Title, Image FROM %v WHERE ID = %v", SeriesTable, id)
-	err = db.QueryRow(q).Scan(&title, &image)
+	q := fmt.Sprintf("SELECT Title, Image FROM %v WHERE ID = ?", SeriesTable)
+	err = db.QueryRow(q, id).Scan(&title, &image)
 	if err != nil {
 		return Series{}, err
 	}
@@ -114,9 +114,9 @@ func RemoveSeries(db *sql.DB, id int64) error {
 		return err
 	}
 
-	s := "DELETE FROM %v WHERE ID=%v"
-	q := fmt.Sprintf(s, SeriesTable, id)
-	if _, err := db.Exec(q); err != nil {
+	s := "DELETE FROM %v WHERE ID = ?"
+	q := fmt.Sprintf(s, SeriesTable)
+	if _, err := db.Exec(q, id); err != nil {
 		return err
 	}
 
@@ -129,8 +129,8 @@ func FindSeriesByTitle(db *sql.DB, t string) (Series, error) {
 	var title string
 	var image string
 
-	q := fmt.Sprintf("SELECT ID, Title, Image FROM %v WHERE Title = '%v'", SeriesTable, t)
-	err := db.QueryRow(q).Scan(&id, &title, &image)
+	q := fmt.Sprintf("SELECT ID, Title, Image FROM %v WHERE Title = ?", SeriesTable)
+	err := db.QueryRow(q, t).Scan(&id, &title, &image)
 	if err != nil {
 		return Series{}, err
 	}
@@ -171,12 +171,12 @@ func ReadEpisodeResource(db *sql.DB, id int64) (EpisodeResource, error) {
 		return EpisodeResource{}, err
 	}
 
-	m := "SELECT Series_ID, Name, URL FROM %v WHERE ID = %v"
-	q := fmt.Sprintf(m, EpisodesResourceTable, id)
+	m := "SELECT Series_ID, Name, URL FROM %v WHERE ID = ?"
+	q := fmt.Sprintf(m, EpisodesResourceTable)
 	var seriesID int64
 	var name string
 	var url string
-	err = db.QueryRow(q).Scan(&seriesID, &name, &url)
+	err = db.QueryRow(q, id).Scan(&seriesID, &name, &url)
 	if err != nil {
 		return EpisodeResource{}, err
 	}
@@ -220,14 +220,14 @@ func ReadUser(db *sql.DB, id int64) (User, error) {
 		return User{}, err
 	}
 
-	m := "SELECT ID,Name,Password FROM %v WHERE ID=%v"
-	q := fmt.Sprintf(m, UserTable, id)
+	m := "SELECT ID,Name,Password FROM %v WHERE ID = ?"
+	q := fmt.Sprintf(m, UserTable)
 
 	var idTmp int64
 	var name string
 	var pass string
 
-	err = db.QueryRow(q).Scan(&idTmp, &name, &pass)
+	err = db.QueryRow(q, id).Scan(&idTmp, &name, &pass)
 	if err != nil {
 		return User{}, err
 	}
@@ -247,14 +247,14 @@ func FindUserByName(db *sql.DB, name string) (User, error) {
 		return User{}, err
 	}
 
-	m := "SELECT ID,Name,Password FROM %v WHERE Name='%v'"
-	q := fmt.Sprintf(m, UserTable, name)
+	m := "SELECT ID,Name,Password FROM %v WHERE Name = ?"
+	q := fmt.Sprintf(m, UserTable)
 
 	var id int64
 	var nameTmp string
 	var pass string
 
-	err = db.QueryRow(q).Scan(&id, &nameTmp, &pass)
+	err = db.QueryRow(q, name).Scan(&id, &nameTmp, &pass)
 	if err != nil {
 		return User{}, err
 	}
@@ -322,9 +322,9 @@ func RemoveSeriesList(db *sql.DB, userID, seriesID int64) (int64, error) {
 		return 0, err
 	}
 
-	s := "DELETE FROM %v WHERE User_ID=%v AND Series_ID=%v"
-	q := fmt.Sprintf(s, SeriesListTable, userID, seriesID)
-	rsrc, err := db.Exec(q)
+	s := "DELETE FROM %v WHERE User_ID = ? AND Series_ID = ?"
+	q := fmt.Sprintf(s, SeriesListTable)
+	rsrc, err := db.Exec(q, userID, seriesID)
 	if err != nil {
 		return 0, err
 	}
@@ -341,12 +341,12 @@ func ReadSeriesList(db *sql.DB, userID int64) (SeriesList, error) {
 	m := `
 	SELECT series.ID as ID, series.Title as Title, series.Image as Image
 	FROM %v as series, %v as list 
-	WHERE list.User_ID=%v
+	WHERE list.User_ID = ? 
 	AND series.ID=list.Series_ID
 	`
-	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
+	q := fmt.Sprintf(m, SeriesTable, SeriesListTable)
 
-	rows, err := db.Query(q)
+	rows, err := db.Query(q, userID)
 	if err != nil {
 		return SeriesList{}, err
 	}
@@ -400,10 +400,10 @@ func ReadLastWatchedList(db *sql.DB, userID int64) (LastWatchedList, error) {
 	s := `
 	SELECT Series_ID, Session, Episode
 	FROM %v
-	WHERE User_ID=%v
+	WHERE User_ID = ? 
 	`
-	q := fmt.Sprintf(s, LastWatchedTable, userID)
-	rows, err := db.Query(q)
+	q := fmt.Sprintf(s, LastWatchedTable)
+	rows, err := db.Query(q, userID)
 	if err != nil {
 		return LastWatchedList{}, err
 	}

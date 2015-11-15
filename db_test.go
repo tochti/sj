@@ -460,8 +460,8 @@ func Test_ReadSeriesList_OK(t *testing.T) {
 		{0, "Mr. Robot", "robot.png"},
 		{1, "Narcos", "narcos.png"},
 	}
-	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list WHERE list.User_ID=%v AND series.ID=list.Series_ID`
-	q := fmt.Sprintf(m, SeriesTable, SeriesListTable, userID)
+	m := `SELECT series.ID as ID, series.Title as Title, series.Image as Image FROM %v as series, %v as list`
+	q := fmt.Sprintf(m, SeriesTable, SeriesListTable)
 	rows := sqlmock.NewRows([]string{"ID", "Title", "Image"})
 
 	for _, s := range expect {
@@ -524,8 +524,8 @@ func Test_ReadLastWatchedList_OK(t *testing.T) {
 		{userID, int64(2), 4, 5},
 	}
 
-	s := "SELECT Series_ID, Session, Episode FROM %v WHERE User_ID=%v"
-	q := fmt.Sprintf(s, LastWatchedTable, userID)
+	s := "SELECT Series_ID, Session, Episode FROM %v"
+	q := fmt.Sprintf(s, LastWatchedTable)
 	rows := sqlmock.NewRows([]string{
 		"Series_ID", "Session", "Episode",
 	})
@@ -560,8 +560,8 @@ func Test_CountSeriesWithImage_OK(t *testing.T) {
 
 	image := "test.png"
 
-	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image = '%v'"
-	q := fmt.Sprintf(s, SeriesTable, image)
+	s := "SELECT COUNT(ID) as Images FROM %v"
+	q := fmt.Sprintf(s, SeriesTable)
 	rows := sqlmock.NewRows([]string{"Images"})
 
 	rows.AddRow(1)
