@@ -109,6 +109,20 @@ func ReadSeries(db *sql.DB, id int64) (Series, error) {
 	return s, nil
 }
 
+func RemoveSeries(db *sql.DB, id int64) error {
+	if err := db.Ping(); err != nil {
+		return err
+	}
+
+	s := "DELETE FROM %v WHERE ID=%v"
+	q := fmt.Sprintf(s, SeriesTable, id)
+	if _, err := db.Exec(q); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FindSeriesByTitle(db *sql.DB, t string) (Series, error) {
 
 	var id int64
@@ -302,6 +316,27 @@ func AppendSeriesList(db *sql.DB, userID, seriesID int64) error {
 	return nil
 }
 
+func RemoveSeriesList(db *sql.DB, userID, seriesID int64) (int64, error) {
+	err := db.Ping()
+	if err != nil {
+		return 0, err
+	}
+
+	s := "DELETE FROM %v WHERE User_ID=%v AND Series_ID=%v"
+	q := fmt.Sprintf(s, SeriesListTable, userID, seriesID)
+	rsrc, err := db.Exec(q)
+	if err != nil {
+		return 0, err
+	}
+
+	c, err := rsrc.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return c, nil
+}
+
 func ReadSeriesList(db *sql.DB, userID int64) (SeriesList, error) {
 	m := `
 	SELECT series.ID as ID, series.Title as Title, series.Image as Image
@@ -396,4 +431,21 @@ func ReadLastWatchedList(db *sql.DB, userID int64) (LastWatchedList, error) {
 	}
 
 	return wList, nil
+}
+
+func CountSeriesWithImage(db *sql.DB, image string) (int, error) {
+	if err := db.Ping(); err != nil {
+		return 0, err
+	}
+
+	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image=?"
+	q := fmt.Sprintf(s, SeriesTable)
+	var amount int
+	err := db.QueryRow(q, image).Scan(&amount)
+	if err != nil {
+		return 0, err
+	}
+
+	return amount, nil
+
 }

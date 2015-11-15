@@ -132,6 +132,27 @@ func Test_NewSeries_OK(t *testing.T) {
 	}
 }
 
+func Test_RemoveSeries_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	query := fmt.Sprintf("DELETE FROM %v", SeriesTable)
+	mock.ExpectExec(query).
+		WillReturnResult(sqlmock.NewResult(series.ID, 1))
+
+	err = RemoveSeries(db, series.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_ReadSeries_OK(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -402,6 +423,32 @@ func Test_AppendSeriesList_OK(t *testing.T) {
 	}
 }
 
+func Test_RemoveSeriesList_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	userID := int64(2)
+	seriesID := int64(1)
+
+	q := fmt.Sprintf("DELETE FROM %v", SeriesListTable)
+	mock.ExpectExec(q).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	c, err := RemoveSeriesList(db, userID, seriesID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c != 1 {
+		t.Fatal("Expect to delete one row")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_ReadSeriesList_OK(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -499,4 +546,38 @@ func Test_ReadLastWatchedList_OK(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+}
+
+func Test_CountSeriesWithImage_OK(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	image := "test.png"
+
+	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image=%v"
+	q := fmt.Sprintf(s, SeriesTable, image)
+	rows := sqlmock.NewRows([]string{"Images"})
+
+	rows.AddRow(1)
+
+	mock.ExpectQuery(q).WillReturnRows(rows)
+
+	amount, err := CountSeriesWithImage(db, image)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if amount != 1 {
+		t.Fatal("Expect 1 was", amount)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 }

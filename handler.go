@@ -123,6 +123,64 @@ func ReadSeriesHandler(app AppCtx, c *gin.Context) error {
 	return nil
 }
 
+func RemoveSeriesHandler(app AppCtx, c *gin.Context) error {
+	idParam := c.Params.ByName("id")
+	tmp, err := strconv.Atoi(idParam)
+	if err != nil {
+		return err
+	}
+	seriesID := int64(tmp)
+
+	session, err := kauth.ReadSession(c)
+	if err != nil {
+		return err
+	}
+	tmp, err = strconv.Atoi(session.UserID())
+	if err != nil {
+		return err
+	}
+	userID := int64(tmp)
+
+	series, err := ReadSeries(app.DB, seriesID)
+	if err != nil {
+		return err
+	}
+
+	affected, err := RemoveSeriesList(app.DB, userID, seriesID)
+	if err != nil {
+		return err
+	}
+
+	if affected < 1 {
+		return errors.New("Cannot found Series")
+	}
+
+	err = RemoveSeries(app.DB, seriesID)
+	if err != nil {
+		err2 := AppendSeriesList(app.DB, userID, seriesID)
+		if err2 != nil {
+			return err2
+		}
+
+		return err
+	}
+
+	count, err := CountSeriesWithImage(app.DB, series.Image)
+	if err != nil {
+		return err
+	}
+
+	if count > 1 {
+		removeImage(path.Join(app.Specs.ImageDir, series.Image))
+	}
+
+	resp := NewSuccessResponse(series)
+	c.JSON(http.StatusOK, resp)
+
+	return nil
+
+}
+
 func NewUserHandler(app AppCtx, c *gin.Context) error {
 	user, err := ParseNewUserRequest(c)
 	if err != nil {
