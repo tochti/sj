@@ -560,7 +560,7 @@ func Test_CountSeriesWithImage_OK(t *testing.T) {
 
 	image := "test.png"
 
-	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image=%v"
+	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image = '%v'"
 	q := fmt.Sprintf(s, SeriesTable, image)
 	rows := sqlmock.NewRows([]string{"Images"})
 

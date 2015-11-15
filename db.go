@@ -438,7 +438,7 @@ func CountSeriesWithImage(db *sql.DB, image string) (int, error) {
 		return 0, err
 	}
 
-	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image=?"
+	s := "SELECT COUNT(ID) as Images FROM %v WHERE Image = ?"
 	q := fmt.Sprintf(s, SeriesTable)
 	var amount int
 	err := db.QueryRow(q, image).Scan(&amount)
