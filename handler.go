@@ -170,7 +170,7 @@ func RemoveSeriesHandler(app AppCtx, c *gin.Context) error {
 		return err
 	}
 
-	if count > 1 {
+	if count == 0 {
 		removeImage(path.Join(app.Specs.ImageDir, series.Image))
 	}
 
