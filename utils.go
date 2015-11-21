@@ -277,8 +277,7 @@ func ParseUpdateLastWatchedRequest(c *gin.Context) (LastWatched, error) {
 	return w, nil
 }
 func NewSha512Password(pass string) string {
-	hash := sha512.New()
-	tmp := hash.Sum([]byte(pass))
+	tmp := sha512.Sum512([]byte(pass))
 	passHash := fmt.Sprintf("%x", tmp)
 	return passHash
 }
